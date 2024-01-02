@@ -21,6 +21,10 @@
     "large": "/assets/images/large.png",
     "xlarge": "/assets/images/xlarge.png"
   },
+  "bugs": {
+    "url": "https://github.com/molnarg/com.ngbs.icon/issues"
+  },
+  "source": "https://github.com/molnarg/com.ngbs.icon",
   "author": {
     "name": "Gábor Molnár",
     "email": "gabor@molnar-papp.hu"
