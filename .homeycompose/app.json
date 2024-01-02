@@ -1,0 +1,28 @@
+{
+  "id": "com.ngbs.icon",
+  "version": "1.0.0",
+  "compatibility": ">=5.0.0",
+  "sdk": 3,
+  "platforms": [
+    "local"
+  ],
+  "name": {
+    "en": "NGBS iCON"
+  },
+  "description": {
+    "en": "Thermostat controls for the NGBS iCON surface heating/cooling system"
+  },
+  "category": [
+    "climate"
+  ],
+  "permissions": [],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
+  },
+  "author": {
+    "name": "Gábor Molnár",
+    "email": "gabor@molnar-papp.hu"
+  }
+}
