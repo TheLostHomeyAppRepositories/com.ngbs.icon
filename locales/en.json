@@ -1,8 +1,8 @@
 {
     "pair": {
-        "ip": {
-            "title":  "Address of the NGBS iCON controller",
-            "description": "It's important that this IP address or domain name doesn't change, otherwise the integration will break. Either configure your router to always assign the same IP to this device over DHCP, or configure the controller to use a fixed IP instead of using DHCP.",
+        "address": {
+            "title":  "Address of the controller",
+            "description": "It's important that the controller is always reachable under this IP address or domain name, otherwise the integration will break. Either configure your router to always assign the same IP to this device over DHCP, or configure the controller to use a fixed IP instead of using DHCP.",
             "submit": "Connect",
             "errors": {
                 "EHOSTUNREACH": "The specified address is unreachable.",

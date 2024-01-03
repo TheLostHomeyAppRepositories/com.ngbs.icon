@@ -1,17 +1,17 @@
 <script type="application/javascript">
-    const ip = document.getElementById('ip');
+    const address = document.getElementById('address');
     const button = document.getElementById('connect');
     const error = document.getElementById('error');
 
-    ip.addEventListener('keyup', () => {
-        ip.validity.valid ? button.removeAttribute('disabled') : button.setAttribute('disabled', 'disabled');
+    address.addEventListener('keyup', () => {
+        address.validity.valid ? button.removeAttribute('disabled') : button.setAttribute('disabled', 'disabled');
     });
 
     document.querySelector('form').addEventListener('submit', (event) => {
         event.preventDefault();
         error.innerText = '';
         Homey.showLoadingOverlay();
-        Homey.emit('connect', ip.value).then((msg) => {
+        Homey.emit('connect', address.value).then((msg) => {
             if (msg.error) {
                 error.innerText = msg.error;
             }
@@ -21,7 +21,7 @@
 </script>
 
 <style>
-    #ip {
+    #address {
         margin-bottom: 1em;
     }
 
@@ -35,10 +35,10 @@
     }
 </style>
 
-<h1 class="homey-title" data-i18n="pair.ip.title"></h1>
-<p data-i18n="pair.ip.description"></p>
+<h1 class="homey-title" data-i18n="pair.address.title"></h1>
+<p data-i18n="pair.address.description"></p>
 <form class="homey-form">
-    <input class="homey-form-input" id="ip" type="text" required>
-    <button class="homey-button-primary" id="connect" disabled="disabled" data-i18n="pair.ip.submit"></button>
+    <input class="homey-form-input" id="address" type="text" required>
+    <button class="homey-button-primary" id="connect" disabled="disabled" data-i18n="pair.address.submit"></button>
 </form>
 <p id="error"></p>
