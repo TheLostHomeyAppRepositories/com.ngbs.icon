@@ -20,9 +20,11 @@ class IconDriver extends Homey.Driver {
         this.log('Successfully retrieved ' + thermostats.length + ' thermostats.');
         await session.done();
         return;
-      } catch (e) {
-        this.log('NGBS client error', e);
-        return String(e);
+      } catch (e: any) {
+        const code: string = e.code || e.data.code;
+        const error = this.homey.__("pair.ip.errors." + code) || e.message || e.data.message || JSON.stringify(e);
+        this.log('NGBS client error', code, error, e);
+        return {error};
       }
     });
   }

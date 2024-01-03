@@ -1,64 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
+<script type="application/javascript">
+    const ip = document.getElementById('ip');
+    const button = document.getElementById('connect');
+    const error = document.getElementById('error');
 
-<head>
-    <script type="application/javascript">
-        function connect() {
-            const errorText = document.getElementById('error');
-            const ipInput = document.getElementById('ip');
-            const connectButton = document.getElementById('connect');
-            errorText.innerText = '';
-            ipInput.disabled = true;
-            connectButton.disabled = true;
-            connectButton.innerText = 'Connecting...';
-            setTimeout(() => {
-                Homey.emit('connect', ipInput.value).then(function (error) {
-                    errorText.innerText = error;
-                    ipInput.disabled = false;
-                    connectButton.disabled = false;
-                    connectButton.innerText = 'Connect';
-                });
-            }, 1000);
-        }
-    </script>
+    ip.addEventListener('keyup', () => {
+        ip.validity.valid ? button.removeAttribute('disabled') : button.setAttribute('disabled', 'disabled');
+    });
 
-    <style>
-        h1 {
-            margin-top: 1em;
-        }
+    document.querySelector('form').addEventListener('submit', (event) => {
+        event.preventDefault();
+        error.innerText = '';
+        Homey.showLoadingOverlay();
+        Homey.emit('connect', ip.value).then((msg) => {
+            if (msg.error) {
+                error.innerText = msg.error;
+            }
+            Homey.hideLoadingOverlay();
+        });
+    });
+</script>
 
-        #ip {
-            width: 100%;
-        }
+<style>
+    #ip {
+        margin-bottom: 1em;
+    }
 
-        #connect {
-            width: 100%;
-            color: black;
-        }
+    #connect {
+        width: 100%;
+    }
 
-        #connect:disabled {
-            color: grey;
-        }
-        
-        #error {
-            color: red;
-        }
-    </style>
-</head>
+    #error {
+        margin-top: 1em;
+        color: red;
+    }
+</style>
 
-<body>
-    <h1>Fixed IP address of the NGBS iCON controller</h1>
-    <p>
-        It's important that this address doesn't change, otherwise the integration will break.
-        Either configure your router to always assign the same IP to this device over DHCP, or
-        configure the controller to use a fixed IP instead of using DHCP.
-    </p>
-    <p>
-        <input id="ip" required type="text" minlength="7" maxlength="15" placeholder="e.g. 192.168.1.15"
-            onkeyup="document.getElementById('connect').disabled = !validity.valid">
-    </p>
-    <p><button id="connect" disabled onclick="connect()">Connect</button></p>
-    <p id="error"></p>
-</body>
-
-</html>
+<h1 class="homey-title" data-i18n="pair.ip.title"></h1>
+<p data-i18n="pair.ip.description"></p>
+<form class="homey-form">
+    <input class="homey-form-input" id="ip" type="text" required>
+    <button class="homey-button-primary" id="connect" disabled="disabled" data-i18n="pair.ip.submit"></button>
+</form>
+<p id="error"></p>
