@@ -12,19 +12,32 @@ class IconDriver extends Homey.Driver {
   }
 
   async onPair(session: PairSession) {
-    session.setHandler("connect", async ip => {
-      const client = new NgbsIconModbusTcpClient(ip);
+    let address: string;
+
+    session.setHandler("setAddress", async msg => {
+      address = msg;
+    });
+
+    session.setHandler("list_devices", async () => {
+      const client = new NgbsIconModbusTcpClient(address);
       try {
-        this.log('Testing IP ' + ip);
+        this.log('Testing address ' + address);
         const thermostats = await client.getThermostats();
         this.log('Successfully retrieved ' + thermostats.length + ' thermostats.');
-        await session.done();
-        return;
+        const devices = thermostats.map((thermostat, index) => ({
+          name: "Thermostat " + (index + 1),
+          data: {
+            address,
+            id: thermostat.id,
+          },
+        }));
+        this.log('Devices:', devices);
+        return devices;
       } catch (e: any) {
         const code: string = e.code || e.data.code;
-        const error = this.homey.__("pair.ip.errors." + code) || e.message || e.data.message || JSON.stringify(e);
+        const error = this.homey.__("pair.address.errors." + code) || e.message || e.data.message || JSON.stringify(e);
         this.log('NGBS client error', code, error, e);
-        return {error};
+        throw new Error(error);
       }
     });
   }
