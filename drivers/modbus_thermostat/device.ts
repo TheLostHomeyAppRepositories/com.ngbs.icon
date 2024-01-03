@@ -45,7 +45,7 @@ class ThermostatDevice extends Homey.Device {
     this.setCapabilityValue("target_temperature", status.target);
     this.setCapabilityValue("measure_temperature", status.temperature);
     this.setCapabilityValue("measure_humidity", status.humidity);
-    this.setCapabilityValue("thermostat_mode", status.cooling ? 'cool' : 'heat');
+    this.setCapabilityValue("thermostat_mode", status.valve ? (status.cooling ? 'cool' : 'heat') : 'off');
   }
 }
 
