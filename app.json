@@ -33,7 +33,7 @@
   "drivers": [
     {
       "name": {
-        "en": "icon"
+        "en": "NGBS iCON (LAN)"
       },
       "class": "thermostat",
       "capabilities": [
@@ -49,9 +49,9 @@
         "lan"
       ],
       "images": {
-        "small": "/drivers/icon/assets/images/small.png",
-        "large": "/drivers/icon/assets/images/large.png",
-        "xlarge": "/drivers/icon/assets/images/xlarge.png"
+        "small": "/drivers/modbus_thermostat/assets/images/small.png",
+        "large": "/drivers/modbus_thermostat/assets/images/large.png",
+        "xlarge": "/drivers/modbus_thermostat/assets/images/xlarge.png"
       },
       "pair": [
         {
@@ -72,7 +72,7 @@
           "template": "add_devices"
         }
       ],
-      "id": "icon"
+      "id": "modbus_thermostat"
     }
   ]
 }
