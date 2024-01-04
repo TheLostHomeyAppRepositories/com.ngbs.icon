@@ -1,1 +1,1 @@
-Thermostat controls for the NGBS iCON surface heating/cooling system
+Control and monitor your NGBS iCON thermostats and surface heating/cooling system from Homey.
