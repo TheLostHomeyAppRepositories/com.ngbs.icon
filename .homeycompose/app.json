@@ -18,8 +18,7 @@
   "permissions": [],
   "images": {
     "small": "/assets/images/small.png",
-    "large": "/assets/images/large.png",
-    "xlarge": "/assets/images/xlarge.png"
+    "large": "/assets/images/large.png"
   },
   "bugs": {
     "url": "https://github.com/molnarg/com.ngbs.icon/issues"
