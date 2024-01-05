@@ -30,7 +30,7 @@ class ThermostatDevice extends Homey.Device {
     this.log('Setting target temperature to ' + target);
     await this.modbusThermostatDriver.poll();
     await this.client!.setThermostatTarget(this.getData().id, this.status.cooling, this.status.eco, target);
-    await setTimeout(1000);
+    await setTimeout(2000); // Wait for the value to be set, and the valve to be turned on/off
     await this.modbusThermostatDriver.poll();
     this.log('Temperature successfully set to ' + target);
   }
