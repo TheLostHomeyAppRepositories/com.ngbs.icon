@@ -41,7 +41,7 @@ export default class ModbusThermostatDriver extends Homey.Driver {
         }
       }
     } catch(e) {
-      this.log('Error while polling: ', e);
+      this.error('Error while polling: ', e);
     }
   }
 
@@ -72,7 +72,7 @@ export default class ModbusThermostatDriver extends Homey.Driver {
       } catch (e: any) {
         const code: string = e?.code || e?.data?.code || 'other';
         const error = this.homey.__("pair.address.errors." + code) || e?.message || e?.data?.message || JSON.stringify(e);
-        this.log('NGBS client error', code, error, e);
+        this.error('NGBS client error', code, error, e);
         throw new Error(error);
       }
     });
