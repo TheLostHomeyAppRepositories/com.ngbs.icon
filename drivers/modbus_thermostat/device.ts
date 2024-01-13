@@ -9,7 +9,7 @@ class ThermostatDevice extends Homey.Device {
   private modbusThermostatDriver!: ModbusThermostatDriver;
 
   async onInit() {
-    this.log('Initializing...');
+    this.log(`Initializing ${this.getName()}...`);
     this.modbusThermostatDriver = this.driver as ModbusThermostatDriver;
     this.client = this.modbusThermostatDriver.registerClient(
       this.getData().address, this.getData().id, this.setStatus.bind(this)
