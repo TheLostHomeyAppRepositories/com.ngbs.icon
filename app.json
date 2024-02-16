@@ -49,8 +49,8 @@
         "lan"
       ],
       "images": {
-        "small": "/drivers/modbus_thermostat/assets/images/small.jpg",
-        "large": "/drivers/modbus_thermostat/assets/images/large.jpg"
+        "small": "/drivers/thermostat/assets/images/small.jpg",
+        "large": "/drivers/thermostat/assets/images/large.jpg"
       },
       "pair": [
         {
@@ -71,7 +71,7 @@
           "template": "add_devices"
         }
       ],
-      "id": "modbus_thermostat"
+      "id": "thermostat"
     }
   ]
 }
