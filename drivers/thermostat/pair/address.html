@@ -2,7 +2,7 @@
 <p data-i18n="pair.address.description"></p>
 <form class="homey-form">
 <label class="homey-form-label" for="address" data-i18n="pair.address.address"></label>
-<input class="homey-form-input" id="address" type="text"  placeholder="192.168.X.X" onkeyup="Homey.emit('set_address', value)">
+<input class="homey-form-input" id="address" type="text"  placeholder="192.168.X.X" onchange="Homey.emit('set_address', value)">
 <label class="homey-form-label" for="target" data-i18n="pair.address.sysid"></label>
-<input class="homey-form-input" id="sysid" type="text" placeholder="500 XXX XXX XXX" onkeyup="Homey.emit('set_sysid', value)">
+<input class="homey-form-input" id="sysid" type="text" placeholder="500 XXX XXX XXX" onchange="Homey.emit('set_sysid', value)">
 </form>
