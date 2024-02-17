@@ -1,17 +1,15 @@
 {
     "pair": {
         "address": {
-            "title":  "Address of the controller",
-            "description": "It's important that the controller is always reachable under this IP address or domain name, otherwise the integration will break. Either configure your router to always assign the same IP to this device over DHCP, or configure the controller to use a fixed IP instead of using DHCP.",
+            "title":  "Controller Address and ID",
+            "description": "It's important that the controller is always reachable under this network address, otherwise the app will break. Either configure your router to always assign the same IP to this device over DHCP, or configure the controller to use a fixed IP instead of using DHCP. The ID is printed on the controller or can be found in the NGBS app settings.",
+            "address": "Network Address",
+            "sysid": "NGBS ID",
             "errors": {
                 "EHOSTUNREACH": "The specified address is unreachable.",
                 "ENOTFOUND": "IP or domain does not exist.",
                 "ECONNREFUSED": "Connection was refused - maybe not an iCON controller?"
             }
-        },
-        "sysid": {
-            "title": "ID of the controller",
-            "description": "This ID is printed on the controller or can be found in the NGBS app settings."
         }
     }
 }
