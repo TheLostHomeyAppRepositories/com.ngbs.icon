@@ -1,6 +1,7 @@
 import Homey from 'homey';
 import { PairSession } from 'homey/lib/Driver';
 import { broadcastState } from '../../common/client'
+import { scan } from '../../common/discovery'
 import { connect } from "ngbs-icon";
 import ThermostatDevice from './device';
 
@@ -32,6 +33,7 @@ export default class ThermostatDriver extends Homey.Driver {
   }
 
   async onPair(session: PairSession) {
+    this.log('Start pairing')
     let address: string;
     let sysid: string;
 
@@ -45,14 +47,22 @@ export default class ThermostatDriver extends Homey.Driver {
       this.log('Set SYSID to ' + sysid);
     });
 
-    // Prefill address and SYSID based on existing devices
+    // Prefill address and SYSID based on existing devices or network scan
     session.setHandler("prefill", async () => {
       const devices = this.getDevices() as ThermostatDevice[];
       if (devices.length) {
         const url = new URL(devices[0].getData().url);
         sysid = url.username;
         address = url.hostname;
-        return { sysid, address };
+        this.log('Prefill existing address and SYSID:', address, sysid)
+        return { address, sysid };
+      } else {
+        const result = await scan(session.emit.bind(session, 'scan'), this.log.bind(this));
+        if (result) {
+          address = result.address;
+          sysid = result.sysid;
+          return result;
+        }
       }
     });
 
@@ -60,8 +70,7 @@ export default class ThermostatDriver extends Homey.Driver {
       try {
         const url = 'service://' + sysid + '@' + address + ':7992';
         this.log('Connecting to ' + url);
-        const client = connect(url);
-        const thermostats = broadcastState(await client.getState()).thermostats;
+        const thermostats = broadcastState(await connect(url).getState()).thermostats;
         this.log('Successfully retrieved ' + thermostats.length + ' thermostats.');
         const devices = thermostats.map((thermostat, index) => ({
           name: thermostat.name || ("Thermostat " + (index + 1)),

@@ -6,10 +6,15 @@
 <label class="homey-form-label" for="target" data-i18n="pair.address.sysid"></label>
 <input class="homey-form-input" id="sysid" type="text" placeholder="500 XXX XXX XXX" onchange="Homey.emit('set_sysid', value)">
 </form>
+<p id="scan" style="display: none; margin-top: 1em;"><span data-i18n="pair.address.scan"></span><span id="percent"></span></p>
 <script>
-    Homey.emit("prefill").then(function (prefill) {
+    Homey.emit('prefill').then(function (prefill) {
         if (!prefill) return;
         address.value = prefill.address;
         sysid.value = prefill.sysid;
+    });
+    Homey.on('scan', function(progress) {
+        scan.style.display = (progress === null) ? 'none' : '';
+        percent.textContent = progress + '%';
     });
 </script>
