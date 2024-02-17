@@ -1,5 +1,8 @@
 {
   "1.0.0": {
     "en": "Initial release"
+  },
+  "2.0.0": {
+    "en": "Automatic discovery of iCON controllers with network scanning"
   }
 }
