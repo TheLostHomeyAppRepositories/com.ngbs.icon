@@ -6,7 +6,7 @@ import { NgbsIconClientManager } from '../../common/client'
 /** Implement the pairing process, and aggregate polling across all thermostats. */
 export default class ModbusThermostatDriver extends Homey.Driver {
   private pollInterval: NodeJS.Timeout | undefined;
-  private statusUpdateCallbacks: {[address: string]: Function[]} = {};
+  private statusUpdateCallbacks: Map<string, Map<string, Function>> = new Map();
 
   async onInit() {
     this.pollInterval = setInterval(() => this.poll(), 60000);
@@ -18,25 +18,26 @@ export default class ModbusThermostatDriver extends Homey.Driver {
     this.log('Uninitialized');
   }
 
-  registerClient(address: string, id: number, statusUpdateCallback: Function): NgbsIconClient {
+  registerClient(address: string, id: string, statusUpdateCallback: Function): NgbsIconClient {
     const client = NgbsIconClientManager.registerClient(address);
-    const callbacks = this.statusUpdateCallbacks[address] || [];
-    callbacks[id] = statusUpdateCallback;
-    this.statusUpdateCallbacks[address] = callbacks;
+    const callbacks = this.statusUpdateCallbacks.get(address) || new Map<string, Function>();
+    callbacks.set(id, statusUpdateCallback);
+    this.statusUpdateCallbacks.set(address, callbacks);
     return client;
   }
 
-  unregisterClient(address: string, id: number) {
+  unregisterClient(address: string, id: string) {
     NgbsIconClientManager.unregisterClient(address);
-    delete this.statusUpdateCallbacks[address][id]
-    if (!this.statusUpdateCallbacks[address].length) delete this.statusUpdateCallbacks[address];
+    const callbacks = this.statusUpdateCallbacks.get(address)!;
+    callbacks.delete(id);
+    if (!callbacks.size) this.statusUpdateCallbacks.delete(address);
   }
 
   async poll() {
     try {
-      for (let [address, callbacks] of Object.entries(this.statusUpdateCallbacks)) {
-        for (let thermostat of await NgbsIconClientManager.clients[address]!.client.getThermostats()) {
-          const callback = callbacks[thermostat.id];
+      for (let [address, callbacks] of this.statusUpdateCallbacks.entries()) {
+        for (let thermostat of (await NgbsIconClientManager.clients[address]!.client.getState()).thermostats) {
+          const callback = callbacks.get(thermostat.id);
           if (callback) callback(thermostat);
         }
       }
@@ -47,27 +48,34 @@ export default class ModbusThermostatDriver extends Homey.Driver {
 
   async onPair(session: PairSession) {
     let address: string;
+    let sysid: string;
 
     session.setHandler("set_address", async msg => {
-      address = 'modbus-tcp:' + msg;
+      address = msg;
       this.log('Set address to ' + address);
+    });
+
+    session.setHandler("set_sysid", async msg => {
+      sysid = msg;
+      this.log('Set SYSID to ' + sysid);
     });
 
     session.setHandler("list_devices", async () => {
       try {
-        this.log('Connecting to ' + address);
-        const client = NgbsIconClientManager.registerClient(address);
-        const thermostats = await client.getThermostats();
+        const url = 'service://' + sysid + '@' + address;
+        this.log('Connecting to ' + url);
+        const client = NgbsIconClientManager.registerClient(url);
+        const thermostats = (await client.getState()).thermostats;
         this.log('Successfully retrieved ' + thermostats.length + ' thermostats.');
         const devices = thermostats.map((thermostat, index) => ({
-          name: "Thermostat " + (index + 1),
+          name: thermostat.name || ("Thermostat " + (index + 1)),
           data: {
-            address,
+            url,
             id: thermostat.id,
           },
         }));
         this.log('Devices:', devices);
-        NgbsIconClientManager.unregisterClient(address);
+        NgbsIconClientManager.unregisterClient(url);
         return devices;
       } catch (e: any) {
         const code: string = e?.code || e?.data?.code || 'other';

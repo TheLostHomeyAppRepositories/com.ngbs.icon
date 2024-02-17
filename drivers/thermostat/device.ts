@@ -12,7 +12,7 @@ class ThermostatDevice extends Homey.Device {
     this.log(`Initializing ${this.getName()}...`);
     this.modbusThermostatDriver = this.driver as ModbusThermostatDriver;
     this.client = this.modbusThermostatDriver.registerClient(
-      this.getData().address, this.getData().id, this.setStatus.bind(this)
+      this.getData().url, this.getData().id, this.setStatus.bind(this)
     );
     this.registerCapabilityListener("target_temperature", this.setTargetTemperature.bind(this));
     this.registerCapabilityListener("thermostat_mode", this.setMode.bind(this));
@@ -22,7 +22,7 @@ class ThermostatDevice extends Homey.Device {
 
   async onUninit() {
     this.log('Uninitializing...');
-    this.modbusThermostatDriver.unregisterClient(this.getData().address, this.getData().id);
+    this.modbusThermostatDriver.unregisterClient(this.getData().url, this.getData().id);
     this.log('Uninitialized');
   }
 

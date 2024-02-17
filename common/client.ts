@@ -1,4 +1,4 @@
-import { NgbsIconModbusTcpClient, NgbsIconClient } from "ngbs-icon";
+import { connect, NgbsIconClient } from "ngbs-icon";
 
 /** Aggregate connections from different devices/drivers. */
 export class NgbsIconClientManager {
@@ -11,12 +11,8 @@ export class NgbsIconClientManager {
 
     static registerClient(address: string): NgbsIconClient {
         if (!(address in NgbsIconClientManager.clients)) {
-            if (address.startsWith('modbus-tcp:')) {
-                const client = new NgbsIconModbusTcpClient(address.slice('modbus-tcp:'.length));
-                NgbsIconClientManager.clients[address] = { client, users: 1 };
-            } else {
-                throw new Error('Unknown address type: ' + address);
-            }
+            const client = connect(address);
+            NgbsIconClientManager.clients[address] = { client, users: 1 };
         }
         return NgbsIconClientManager.clients[address].client;
     }
@@ -26,7 +22,6 @@ export class NgbsIconClientManager {
         const client = NgbsIconClientManager.clients[address];
         client.users -= 1;
         if (!client.users) {
-            client.client.disconnect();
             delete NgbsIconClientManager.clients[address];
         }
     }

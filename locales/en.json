@@ -8,6 +8,10 @@
                 "ENOTFOUND": "IP or domain does not exist.",
                 "ECONNREFUSED": "Connection was refused - maybe not an iCON controller?"
             }
+        },
+        "sysid": {
+            "title": "ID of the controller",
+            "description": "This ID is printed on the controller or can be found in the NGBS app settings."
         }
     }
 }
