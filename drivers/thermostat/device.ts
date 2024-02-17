@@ -47,10 +47,11 @@ export default class ThermostatDevice extends Homey.Device {
     const status = state.thermostats.find(t => t.id === this.id)!;
     this.status = status;
     this.log('Status update', JSON.stringify(status));
-    this.setCapabilityValue("target_temperature", status.target);
-    this.setCapabilityValue("measure_temperature", status.temperature);
-    this.setCapabilityValue("measure_humidity", status.humidity);
-    this.setCapabilityValue("thermostat_mode", status.valve ? (status.cooling ? 'cool' : 'heat') : 'off');
+    this.setCapabilityValue('target_temperature', status.target);
+    this.setCapabilityValue('measure_temperature', status.temperature);
+    this.setCapabilityValue('measure_humidity', status.humidity);
+    this.setCapabilityValue('thermostat_mode', status.valve ? (status.cooling ? 'cool' : 'heat') : 'off');
+    this.setCapabilityOptions('target_temperature', { "min": 20 - status.limit, "max": 20 + status.limit });
   }
 }
 

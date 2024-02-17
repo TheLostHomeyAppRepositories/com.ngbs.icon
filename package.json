@@ -7,7 +7,7 @@
     "lint": "eslint --ext .js,.ts --ignore-path .gitignore ."
   },
   "dependencies": {
-    "ngbs-icon": "^2.0.4"
+    "ngbs-icon": "^2.0.5"
   },
   "devDependencies": {
     "@tsconfig/node16": "^16.1.1",
