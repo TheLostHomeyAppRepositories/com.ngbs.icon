@@ -1,12 +1,12 @@
 import Homey from 'homey';
 import { PairSession } from 'homey/lib/Driver';
-import { NgbsIconClient } from "ngbs-icon";
-import { NgbsIconClientManager } from '../../common/client'
+import { broadcastState } from '../../common/client'
+import { connect } from "ngbs-icon";
+import ThermostatDevice from './device';
 
-/** Implement the pairing process, and aggregate polling across all thermostats. */
-export default class ModbusThermostatDriver extends Homey.Driver {
+/** Implement the pairing process. */
+export default class ThermostatDriver extends Homey.Driver {
   private pollInterval: NodeJS.Timeout | undefined;
-  private statusUpdateCallbacks: Map<string, Map<string, Function>> = new Map();
 
   async onInit() {
     this.pollInterval = setInterval(() => this.poll(), 60000);
@@ -18,28 +18,13 @@ export default class ModbusThermostatDriver extends Homey.Driver {
     this.log('Uninitialized');
   }
 
-  registerClient(address: string, id: string, statusUpdateCallback: Function): NgbsIconClient {
-    const client = NgbsIconClientManager.registerClient(address);
-    const callbacks = this.statusUpdateCallbacks.get(address) || new Map<string, Function>();
-    callbacks.set(id, statusUpdateCallback);
-    this.statusUpdateCallbacks.set(address, callbacks);
-    return client;
-  }
-
-  unregisterClient(address: string, id: string) {
-    NgbsIconClientManager.unregisterClient(address);
-    const callbacks = this.statusUpdateCallbacks.get(address)!;
-    callbacks.delete(id);
-    if (!callbacks.size) this.statusUpdateCallbacks.delete(address);
-  }
-
   async poll() {
     try {
-      for (let [address, callbacks] of this.statusUpdateCallbacks.entries()) {
-        for (let thermostat of (await NgbsIconClientManager.clients[address]!.client.getState()).thermostats) {
-          const callback = callbacks.get(thermostat.id);
-          if (callback) callback(thermostat);
-        }
+      const devices = this.getDevices() as ThermostatDevice[];
+      const urls = devices.map(d => d.getData().url);
+      for (let [i, url] of urls.entries()) {
+        // Only poll once per address
+        if (urls.indexOf(url) !== i) broadcastState(await devices[i].client.getState());
       }
     } catch(e) {
       this.error('Error while polling: ', e);
@@ -62,10 +47,10 @@ export default class ModbusThermostatDriver extends Homey.Driver {
 
     session.setHandler("list_devices", async () => {
       try {
-        const url = 'service://' + sysid + '@' + address;
+        const url = 'service://' + sysid + '@' + address + ':7992';
         this.log('Connecting to ' + url);
-        const client = NgbsIconClientManager.registerClient(url);
-        const thermostats = (await client.getState()).thermostats;
+        const client = connect(url);
+        const thermostats = broadcastState(await client.getState()).thermostats;
         this.log('Successfully retrieved ' + thermostats.length + ' thermostats.');
         const devices = thermostats.map((thermostat, index) => ({
           name: thermostat.name || ("Thermostat " + (index + 1)),
@@ -75,7 +60,6 @@ export default class ModbusThermostatDriver extends Homey.Driver {
           },
         }));
         this.log('Devices:', devices);
-        NgbsIconClientManager.unregisterClient(url);
         return devices;
       } catch (e: any) {
         const code: string = e?.code || e?.data?.code || 'other';
@@ -87,4 +71,4 @@ export default class ModbusThermostatDriver extends Homey.Driver {
   }
 }
 
-module.exports = ModbusThermostatDriver;
+module.exports = ThermostatDriver;
