@@ -45,6 +45,17 @@ export default class ThermostatDriver extends Homey.Driver {
       this.log('Set SYSID to ' + sysid);
     });
 
+    // Prefill address and SYSID based on existing devices
+    session.setHandler("prefill", async () => {
+      const devices = this.getDevices() as ThermostatDevice[];
+      if (devices.length) {
+        const url = new URL(devices[0].getData().url);
+        sysid = url.username;
+        address = url.hostname;
+        return { sysid, address };
+      }
+    });
+
     session.setHandler("list_devices", async () => {
       try {
         const url = 'service://' + sysid + '@' + address + ':7992';
