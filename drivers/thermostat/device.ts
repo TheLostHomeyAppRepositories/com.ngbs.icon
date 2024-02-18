@@ -31,8 +31,7 @@ export default class ThermostatDevice extends Homey.Device {
 
   async setTargetTemperature(target: number) {
     this.log('Setting target temperature to ' + target);
-    broadcastState(await this.client.getState());
-    broadcastState(await this.client.setThermostatTarget(this.id, this.status.cooling, this.status.eco, target));
+    broadcastState(await this.client.setThermostatTarget(this.id, target));
     await setTimeout(2000); // Wait for the valve to be turned on/off
     broadcastState(await this.client.getState());
     this.log('Temperature successfully set to ' + target);
@@ -51,7 +50,10 @@ export default class ThermostatDevice extends Homey.Device {
     this.setCapabilityValue('measure_temperature', status.temperature);
     this.setCapabilityValue('measure_humidity', status.humidity);
     this.setCapabilityValue('thermostat_mode', status.valve ? (status.cooling ? 'cool' : 'heat') : 'off');
-    this.setCapabilityOptions('target_temperature', { "min": 20 - status.limit, "max": 20 + status.limit });
+    this.setCapabilityOptions('target_temperature', {
+      "min": status.midpoint - status.limit,
+      "max": status.midpoint + status.limit,
+    });
   }
 }
 
