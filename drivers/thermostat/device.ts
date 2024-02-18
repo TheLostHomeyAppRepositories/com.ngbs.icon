@@ -1,5 +1,5 @@
 import Homey from 'homey';
-import { NgbsIconClient, NgbsIconThermostat, NgbsIconState } from "ngbs-icon";
+import { NgbsIconClient, NgbsIconThermostat, NgbsIconState, NgbsIconControllerConfig } from "ngbs-icon";
 import { setTimeout } from "timers/promises";
 import { stateUpdates, broadcastState } from '../../common/client'
 import { connect } from "ngbs-icon";
@@ -7,6 +7,7 @@ import { connect } from "ngbs-icon";
 export default class ThermostatDevice extends Homey.Device {
   client!: NgbsIconClient;
   private status!: NgbsIconThermostat;
+  private config!: NgbsIconControllerConfig;
   private id!: string;
   private broadcastListener!: (state: NgbsIconState) => void;
 
@@ -19,7 +20,7 @@ export default class ThermostatDevice extends Homey.Device {
     stateUpdates.on(data.url, this.broadcastListener);
     this.registerCapabilityListener("target_temperature", this.setTargetTemperature.bind(this));
     this.registerCapabilityListener("thermostat_mode", this.setMode.bind(this));
-    broadcastState(await this.client.getState());
+    broadcastState(await this.client.getState(true));
     this.log('Initialized');
   }
 
@@ -38,8 +39,50 @@ export default class ThermostatDevice extends Homey.Device {
   }
 
   async setMode(mode: string) {
-    this.log('Trying to set mode to ' + mode);
-    throw new Error('Can not set mode per thermostat.');
+    if (mode === 'auto') throw new Error('Auto mode is not supported');
+
+    this.log('Setting mode to ' + mode);
+    let status = this.status;
+    const t = status.temperature;
+    const h = this.config.thermostatHysteresis;
+
+    if (mode === 'off') {
+      if (!status.valve) {
+        this.log('Valve is already off - no need to do anything');
+        return;
+      }
+      const target = status.cooling ? Math.ceil((t + h) * 2) / 2 : Math.floor((t - h) * 2) / 2;
+      this.log('Setting target to turn off valve', target, t, h);
+      await this.client.setThermostatTarget(this.id, target);
+      await setTimeout(2000); // Wait for the valve to be turned on/off
+
+    } else {
+      const cool = (mode === 'cool');
+      if (status.cooling !== cool) {
+        this.log('Changing thermostat mode to ' + mode);
+        await this.client.setThermostatCooling(this.id, cool);
+        // Wait for changes to take effect - yes, it takes that long
+        await setTimeout(7500);
+        // Do not broadcast new status to avoid flickering due to intermediate target/valve status
+        status = (await this.client.getState()).thermostats.find(t => t.id === this.id)!;
+        if (status.cooling !== cool) {
+          this.log('Could not change mode');
+          throw new Error('Could not change mode');
+        }
+      } else if (status.valve) {
+        this.log('Mode is already set to this and the valve is active - no need to do anything');
+        return;
+      }
+      if (cool ? (t <= status.target) : (t >= status.target)) {
+        const target = cool ? Math.floor((t - h) * 2) / 2 : Math.ceil((t + h) * 2) / 2;
+        this.log('Setting target to turn on valve', target, t, h);
+        await this.client.setThermostatTarget(this.id, target);
+        await setTimeout(2000); // Wait for the valve to be turned on/off
+      }
+    }
+
+    broadcastState(await this.client.getState());
+    this.log('Mode successfully set to ' + mode);
   }
 
   setStatus(state: NgbsIconState) {
@@ -54,6 +97,7 @@ export default class ThermostatDevice extends Homey.Device {
       "min": status.midpoint - status.limit,
       "max": status.midpoint + status.limit,
     });
+    if (state.controller.config) this.config = state.controller.config;
   }
 }
 
