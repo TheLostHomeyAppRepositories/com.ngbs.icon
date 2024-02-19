@@ -33,8 +33,6 @@ export default class ThermostatDevice extends Homey.Device {
   async setTargetTemperature(target: number) {
     this.log('Setting target temperature to ' + target);
     broadcastState(await this.client.setThermostatTarget(this.id, target));
-    await setTimeout(2000); // Wait for the valve to be turned on/off
-    broadcastState(await this.client.getState());
     this.log('Temperature successfully set to ' + target);
   }
 
@@ -45,6 +43,7 @@ export default class ThermostatDevice extends Homey.Device {
     let status = this.status;
     const t = status.temperature;
     const h = this.config.thermostatHysteresis;
+    let state: NgbsIconState;
 
     if (mode === 'off') {
       if (!status.valve) {
@@ -53,22 +52,12 @@ export default class ThermostatDevice extends Homey.Device {
       }
       const target = status.cooling ? Math.ceil((t + h) * 2) / 2 : Math.floor((t - h) * 2) / 2;
       this.log('Setting target to turn off valve', target, t, h);
-      await this.client.setThermostatTarget(this.id, target);
-      await setTimeout(2000); // Wait for the valve to be turned on/off
-
+      state = await this.client.setThermostatTarget(this.id, target);
     } else {
       const cool = (mode === 'cool');
       if (status.cooling !== cool) {
         this.log('Changing thermostat mode to ' + mode);
-        await this.client.setThermostatCooling(this.id, cool);
-        // Wait for changes to take effect - yes, it takes that long
-        await setTimeout(7500);
-        // Do not broadcast new status to avoid flickering due to intermediate target/valve status
-        status = (await this.client.getState()).thermostats.find(t => t.id === this.id)!;
-        if (status.cooling !== cool) {
-          this.log('Could not change mode');
-          throw new Error('Could not change mode');
-        }
+        state = await this.client.setThermostatCooling(this.id, cool);
       } else if (status.valve) {
         this.log('Mode is already set to this and the valve is active - no need to do anything');
         return;
@@ -76,12 +65,11 @@ export default class ThermostatDevice extends Homey.Device {
       if (cool ? (t <= status.target) : (t >= status.target)) {
         const target = cool ? Math.floor((t - h) * 2) / 2 : Math.ceil((t + h) * 2) / 2;
         this.log('Setting target to turn on valve', target, t, h);
-        await this.client.setThermostatTarget(this.id, target);
-        await setTimeout(2000); // Wait for the valve to be turned on/off
+        state = await this.client.setThermostatTarget(this.id, target);
       }
     }
 
-    broadcastState(await this.client.getState());
+    broadcastState(state!);
     this.log('Mode successfully set to ' + mode);
   }
 
