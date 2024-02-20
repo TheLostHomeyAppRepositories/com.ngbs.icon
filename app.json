@@ -41,7 +41,8 @@
         "target_temperature",
         "measure_temperature",
         "thermostat_mode",
-        "eco"
+        "eco",
+        "locked"
       ],
       "platforms": [
         "local"

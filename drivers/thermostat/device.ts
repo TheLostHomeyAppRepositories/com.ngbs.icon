@@ -1,6 +1,5 @@
 import Homey from 'homey';
 import { NgbsIconClient, NgbsIconThermostat, NgbsIconState, NgbsIconControllerConfig } from "ngbs-icon";
-import { setTimeout } from "timers/promises";
 import { stateUpdates, broadcastState } from '../../common/client'
 import { connect } from "ngbs-icon";
 
@@ -15,6 +14,7 @@ export default class ThermostatDevice extends Homey.Device {
     this.log(`Initializing ${this.getName()}...`);
     // Migrate existing devices (TODO: delete after everyone updated)
     if (!this.hasCapability('eco')) await this.addCapability('eco');
+    if (!this.hasCapability('locked')) await this.addCapability('locked');
     const data = this.getData();
     this.id = data.id;
     this.client = connect(data.url);
@@ -23,6 +23,7 @@ export default class ThermostatDevice extends Homey.Device {
     this.registerCapabilityListener("target_temperature", this.setTargetTemperature.bind(this));
     this.registerCapabilityListener("thermostat_mode", this.setMode.bind(this));
     this.registerCapabilityListener("eco", this.setEco.bind(this));
+    this.registerCapabilityListener("locked", this.setParentalLock.bind(this));
     // Get basic data and config. Assume config does not change (some operations would re-fetch it though).
     broadcastState(await this.client.getState(true));
     this.log('Initialized');
@@ -81,6 +82,10 @@ export default class ThermostatDevice extends Homey.Device {
     broadcastState(await this.client.setThermostatEco(this.id, eco));
   }
 
+  async setParentalLock(lock: boolean) {
+    broadcastState(await this.client.setThermostatParentalLock(this.id, lock));
+  }
+
   setStatus(state: NgbsIconState) {
     const status = state.thermostats.find(t => t.id === this.id)!;
     if (status.target !== this.status?.target) {
@@ -115,6 +120,10 @@ export default class ThermostatDevice extends Homey.Device {
     if (status.eco !== this.status?.eco) {
       this.log('ECO state:', this.status?.eco, '->', status.eco);
       this.setCapabilityValue('eco', status.eco);
+    }
+    if (status.parentalLock !== this.status?.parentalLock) {
+      this.log('Parental lock:', this.status?.parentalLock, '->', status.parentalLock);
+      this.setCapabilityValue('locked', status.parentalLock);
     }
     if (state.controller.config) this.config = state.controller.config;
     this.status = status;
