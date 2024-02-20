@@ -13,6 +13,8 @@ export default class ThermostatDevice extends Homey.Device {
 
   async onInit() {
     this.log(`Initializing ${this.getName()}...`);
+    // Migrate existing devices (TODO: delete after everyone updated)
+    if (!this.hasCapability('eco')) await this.addCapability('eco');
     const data = this.getData();
     this.id = data.id;
     this.client = connect(data.url);
@@ -20,6 +22,7 @@ export default class ThermostatDevice extends Homey.Device {
     stateUpdates.on(data.url, this.broadcastListener);
     this.registerCapabilityListener("target_temperature", this.setTargetTemperature.bind(this));
     this.registerCapabilityListener("thermostat_mode", this.setMode.bind(this));
+    this.registerCapabilityListener("eco", this.setEco.bind(this));
     broadcastState(await this.client.getState(true));
     this.log('Initialized');
   }
@@ -73,6 +76,10 @@ export default class ThermostatDevice extends Homey.Device {
     this.log('Mode successfully set to ' + mode);
   }
 
+  async setEco(eco: boolean) {
+    broadcastState(await this.client.setThermostatEco(this.id, eco));
+  }
+
   setStatus(state: NgbsIconState) {
     const status = state.thermostats.find(t => t.id === this.id)!;
     this.status = status;
@@ -85,6 +92,7 @@ export default class ThermostatDevice extends Homey.Device {
       "min": status.midpoint - status.limit,
       "max": status.midpoint + status.limit,
     });
+    this.setCapabilityValue('eco', status.eco);
     if (state.controller.config) this.config = state.controller.config;
   }
 }

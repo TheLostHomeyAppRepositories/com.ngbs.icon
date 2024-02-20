@@ -40,7 +40,8 @@
         "measure_humidity",
         "target_temperature",
         "measure_temperature",
-        "thermostat_mode"
+        "thermostat_mode",
+        "eco"
       ],
       "platforms": [
         "local"
@@ -73,5 +74,17 @@
       ],
       "id": "thermostat"
     }
-  ]
+  ],
+  "capabilities": {
+    "eco": {
+      "type": "boolean",
+      "title": {
+        "en": "Eco"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "toggle",
+      "icon": "/assets/eco.svg"
+    }
+  }
 }
