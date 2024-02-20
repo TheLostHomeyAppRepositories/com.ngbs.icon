@@ -4,5 +4,8 @@
   },
   "2.0.0": {
     "en": "Automatic discovery of iCON controllers with network scanning"
+  },
+  "2.1.0": {
+    "en": "Ability to set heat/cool mode, eco mode, and parental lock"
   }
 }
