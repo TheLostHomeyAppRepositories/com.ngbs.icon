@@ -6,8 +6,8 @@ import { connect } from "ngbs-icon";
 
 export default class ThermostatDevice extends Homey.Device {
   client!: NgbsIconClient;
-  private status!: NgbsIconThermostat;
-  private config!: NgbsIconControllerConfig;
+  private status?: NgbsIconThermostat;
+  private config?: NgbsIconControllerConfig;
   private id!: string;
   private broadcastListener!: (state: NgbsIconState) => void;
 
@@ -23,6 +23,7 @@ export default class ThermostatDevice extends Homey.Device {
     this.registerCapabilityListener("target_temperature", this.setTargetTemperature.bind(this));
     this.registerCapabilityListener("thermostat_mode", this.setMode.bind(this));
     this.registerCapabilityListener("eco", this.setEco.bind(this));
+    // Get basic data and config. Assume config does not change (some operations would re-fetch it though).
     broadcastState(await this.client.getState(true));
     this.log('Initialized');
   }
@@ -43,9 +44,9 @@ export default class ThermostatDevice extends Homey.Device {
     if (mode === 'auto') throw new Error('Auto mode is not supported');
 
     this.log('Setting mode to ' + mode);
-    let status = this.status;
+    let status = this.status!;
     const t = status.temperature;
-    const h = this.config.thermostatHysteresis;
+    const h = this.config!.thermostatHysteresis;
     let state: NgbsIconState;
 
     if (mode === 'off') {
@@ -82,18 +83,41 @@ export default class ThermostatDevice extends Homey.Device {
 
   setStatus(state: NgbsIconState) {
     const status = state.thermostats.find(t => t.id === this.id)!;
-    this.status = status;
-    this.log('Status update', JSON.stringify(status));
-    this.setCapabilityValue('target_temperature', status.target);
-    this.setCapabilityValue('measure_temperature', status.temperature);
-    this.setCapabilityValue('measure_humidity', status.humidity);
-    this.setCapabilityValue('thermostat_mode', status.valve ? (status.cooling ? 'cool' : 'heat') : 'off');
-    this.setCapabilityOptions('target_temperature', {
-      "min": status.midpoint - status.limit,
-      "max": status.midpoint + status.limit,
-    });
-    this.setCapabilityValue('eco', status.eco);
+    if (status.target !== this.status?.target) {
+      this.log('Target temperature:', this.status?.target, '->', status.target);
+      this.setCapabilityValue('target_temperature', status.target);
+    }
+    if (status.temperature !== this.status?.temperature) {
+      this.log('Measured temperature:', this.status?.temperature, '->', status.temperature);
+      this.setCapabilityValue('measure_temperature', status.temperature);
+    }
+    if (status.humidity !== this.status?.humidity) {
+      this.log('Measured humidity:', this.status?.humidity, '->', status.humidity);
+      this.setCapabilityValue('measure_humidity', status.humidity);
+    }
+    const mode = this.status && (this.status.valve ? (this.status.cooling ? 'cool' : 'heat') : 'off');
+    const newMode = status.valve ? (status.cooling ? 'cool' : 'heat') : 'off';
+    if (newMode !== mode) {
+      this.log('Thermostat mode:', mode, '->', newMode);
+      this.setCapabilityValue('thermostat_mode', newMode);
+    }
+    if (status.limit !== this.status?.limit || status.midpoint !== this.status?.midpoint) {
+      this.log(
+        'Limits:',
+        this.status?.midpoint, '+/-', this.status?.limit, '->',
+        status.midpoint, '+/-', status.limit,
+      );
+      this.setCapabilityOptions('target_temperature', {
+        "min": status.midpoint - status.limit,
+        "max": status.midpoint + status.limit,
+      });
+    }
+    if (status.eco !== this.status?.eco) {
+      this.log('ECO state:', this.status?.eco, '->', status.eco);
+      this.setCapabilityValue('eco', status.eco);
+    }
     if (state.controller.config) this.config = state.controller.config;
+    this.status = status;
   }
 }
 
