@@ -54,14 +54,20 @@ export default class ThermostatDriver extends Homey.Driver {
         const url = new URL(devices[0].getData().url);
         sysid = url.username;
         address = url.hostname;
-        this.log('Prefill existing address and SYSID:', address, sysid)
+        this.log('Prefill existing address and SYSID:', address, sysid);
         return { address, sysid };
       } else {
-        const result = await scan(session.emit.bind(session, 'scan'), this.log.bind(this));
-        if (result) {
-          address = result.address;
-          sysid = result.sysid;
-          return result;
+        try {
+          const result = await scan(session.emit.bind(session, 'scan'), this.log.bind(this));
+          if (result) {
+            address = result.address;
+            sysid = result.sysid;
+            return result;
+          }
+        } catch (e) {
+          // This can happen e.g. when the pairing session ends before the scan does and we're try
+          // to send a progress update event
+          this.log('Scan failed with error', e);
         }
       }
     });
