@@ -7,5 +7,8 @@
   },
   "2.1.0": {
     "en": "Ability to set heat/cool mode, eco mode, and parental lock"
+  },
+  "2.1.1": {
+    "en": "Handle network scan errors gracefully, without crashing the app"
   }
 }
