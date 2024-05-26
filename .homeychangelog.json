@@ -10,5 +10,8 @@
   },
   "2.1.1": {
     "en": "Handle network scan errors gracefully, without crashing the app"
+  },
+  "2.1.2": {
+    "en": "Minor compatibility fix"
   }
 }
