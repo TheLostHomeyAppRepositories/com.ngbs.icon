@@ -88,6 +88,7 @@ export default class ThermostatDevice extends Homey.Device {
 
   setStatus(state: NgbsIconState) {
     const status = state.thermostats.find(t => t.id === this.id)!;
+    status.humidity = Math.round(status.humidity);
     if (status.target !== this.status?.target) {
       this.log('Target temperature:', this.status?.target, '->', status.target);
       this.setCapabilityValue('target_temperature', status.target);
@@ -96,7 +97,7 @@ export default class ThermostatDevice extends Homey.Device {
       this.log('Measured temperature:', this.status?.temperature, '->', status.temperature);
       this.setCapabilityValue('measure_temperature', status.temperature);
     }
-    if (Math.floor(status.humidity) !== Math.floor(this.status?.humidity || 0)) {
+    if (status.humidity !== this.status?.humidity) {
       this.log('Measured humidity:', this.status?.humidity, '->', status.humidity);
       this.setCapabilityValue('measure_humidity', status.humidity);
     }
