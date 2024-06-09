@@ -96,7 +96,7 @@ export default class ThermostatDevice extends Homey.Device {
       this.log('Measured temperature:', this.status?.temperature, '->', status.temperature);
       this.setCapabilityValue('measure_temperature', status.temperature);
     }
-    if (status.humidity !== this.status?.humidity) {
+    if (Math.floor(status.humidity) !== Math.floor(this.status?.humidity || 0)) {
       this.log('Measured humidity:', this.status?.humidity, '->', status.humidity);
       this.setCapabilityValue('measure_humidity', status.humidity);
     }
