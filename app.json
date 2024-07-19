@@ -42,8 +42,15 @@
         "measure_temperature",
         "thermostat_mode",
         "eco",
-        "locked"
+        "locked",
+        "alarm_water"
       ],
+      "capabilitiesOptions": {
+        "alarm_water": {
+          "titleTrue": "Dew protection ON",
+          "titleFalse": "Dew protection OFF"
+        }
+      },
       "platforms": [
         "local"
       ],

@@ -14,6 +14,7 @@ export default class ThermostatDevice extends Homey.Device {
     this.log(`Initializing ${this.getName()}...`);
     // Migrate existing devices (TODO: delete after everyone updated)
     if (!this.hasCapability('eco')) await this.addCapability('eco');
+    if (!this.hasCapability('alarm_water')) await this.addCapability('alarm_water');
     if (!this.hasCapability('locked')) await this.addCapability('locked');
     const data = this.getData();
     this.id = data.id;
@@ -100,6 +101,10 @@ export default class ThermostatDevice extends Homey.Device {
     if (status.humidity !== this.status?.humidity) {
       this.log('Measured humidity:', this.status?.humidity, '->', status.humidity);
       this.setCapabilityValue('measure_humidity', status.humidity);
+    }
+    if (status.dewProtection !== this.status?.dewProtection) {
+      this.log('Dew protection:', this.status?.dewProtection, '->', status.dewProtection);
+      this.setCapabilityValue('alarm_water', status.dewProtection);
     }
     const mode = this.status && (this.status.valve ? (this.status.cooling ? 'cool' : 'heat') : 'off');
     const newMode = status.valve ? (status.cooling ? 'cool' : 'heat') : 'off';
