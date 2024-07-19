@@ -13,5 +13,8 @@
   },
   "2.1.2": {
     "en": "Minor compatibility fix"
+  },
+  "2.2.0": {
+    "en": "Added dew protection warning"
   }
 }
