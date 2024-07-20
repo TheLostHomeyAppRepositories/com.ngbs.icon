@@ -22,10 +22,10 @@ export default class ThermostatDriver extends Homey.Driver {
   async poll() {
     try {
       const devices = this.getDevices() as ThermostatDevice[];
-      const urls = devices.map(d => d.getData().url);
+      const urls = devices.map(d => d.url);
       for (let [i, url] of urls.entries()) {
         // Only poll once per address
-        if (urls.indexOf(url) !== i) broadcastState(await devices[i].client.getState());
+        if (urls.indexOf(url) !== i) await devices[i].poll();
       }
     } catch(e) {
       this.error('Error while polling: ', e);
@@ -51,7 +51,7 @@ export default class ThermostatDriver extends Homey.Driver {
     session.setHandler("prefill", async () => {
       const devices = this.getDevices() as ThermostatDevice[];
       if (devices.length) {
-        const url = new URL(devices[0].getData().url);
+        const url = new URL(devices[0].url);
         sysid = url.username;
         address = url.hostname;
         this.log('Prefill existing address and SYSID:', address, sysid);

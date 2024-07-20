@@ -1,6 +1,6 @@
 import Homey from 'homey';
 import { NgbsIconClient, NgbsIconThermostat, NgbsIconState, NgbsIconControllerConfig } from "ngbs-icon";
-import { stateUpdates, broadcastState } from '../../common/client'
+import { stateUpdates, broadcastState, broadcastResult, NgbsQueryResult } from '../../common/client'
 import { connect } from "ngbs-icon";
 
 export default class ThermostatDevice extends Homey.Device {
@@ -8,7 +8,8 @@ export default class ThermostatDevice extends Homey.Device {
   private status?: NgbsIconThermostat;
   private config?: NgbsIconControllerConfig;
   private id!: string;
-  private broadcastListener!: (state: NgbsIconState) => void;
+  url!: string;
+  private broadcastListener!: (state: NgbsQueryResult) => void;
 
   async onInit() {
     this.log(`Initializing ${this.getName()}...`);
@@ -18,21 +19,65 @@ export default class ThermostatDevice extends Homey.Device {
     if (!this.hasCapability('locked')) await this.addCapability('locked');
     const data = this.getData();
     this.id = data.id;
-    this.client = connect(data.url);
+
+    // Network address logic -
+    const url = new URL(data.url);
+    const settings = this.getSettings();
+    this.log('Retrieving address: data.url =', data.url, 'settings.address =', settings.address);
+    if (settings.address) {
+      url.host = settings.address;
+    } else {
+      this.setSettings({address: url.host});
+    }
+    this.url = url.toString();
+    this.log('Connecting to ', this.url);
+    this.client = connect(this.url);
+
     this.broadcastListener = this.setStatus.bind(this);
-    stateUpdates.on(data.url, this.broadcastListener);
+    stateUpdates.on(this.url, this.broadcastListener);
     this.registerCapabilityListener("target_temperature", this.setTargetTemperature.bind(this));
     this.registerCapabilityListener("thermostat_mode", this.setMode.bind(this));
     this.registerCapabilityListener("eco", this.setEco.bind(this));
     this.registerCapabilityListener("locked", this.setParentalLock.bind(this));
     // Get basic data and config. Assume config does not change (some operations would re-fetch it though).
-    broadcastState(await this.client.getState(true));
+    // Do not wait for it to complete, to finish initialization (it might throw an error, we still want to initialize).
+    this.poll();
     this.log('Initialized');
+  }
+
+  async onSettings({ newSettings, changedKeys }: { newSettings: any, changedKeys: string[] }) {
+    if (changedKeys.includes('address')) {
+      // Construct and test new URL, before storing the new URL
+      const url = new URL(this.url);
+      url.host = newSettings.address;
+      const client = connect(url.toString());
+      const state = await client.getState(true);
+      
+      // State retrieval was successful, changing the stored URL
+      this.log('Address changed from', this.url, 'to', url.toString(), ' - reconnecting');
+      stateUpdates.off(this.url, this.broadcastListener);
+      this.url = url.toString();
+      stateUpdates.on(this.url, this.broadcastListener);
+      this.client = client;
+      broadcastState(state);
+    }
+  }
+
+  async poll() {
+    const result: NgbsQueryResult = {};
+    try {
+      result.state = await this.client.getState(true);
+    } catch(e: any) {
+      result.error = e?.message || e?.data?.message || JSON.stringify(e);
+      const code: string = e?.code || e?.data?.code || 'other';
+      this.error('NGBS client error', code, result.error, e);
+    }
+    broadcastResult(this.url, result);
   }
 
   async onUninit() {
     this.log('Uninitializing...');
-    stateUpdates.off(this.getData().url, this.broadcastListener);
+    stateUpdates.off(this.url, this.broadcastListener);
     this.log('Uninitialized');
   }
 
@@ -87,7 +132,16 @@ export default class ThermostatDevice extends Homey.Device {
     broadcastState(await this.client.setThermostatParentalLock(this.id, lock));
   }
 
-  setStatus(state: NgbsIconState) {
+  setStatus(result: NgbsQueryResult) {
+    if (result.error) {
+      if (this.getAvailable()) {
+        this.setUnavailable(result.error);
+        this.error('Marking as unavailable due to error:', result.error);
+      }
+      return;
+    }
+    if (!this.getAvailable()) this.setAvailable();
+    const state = result.state!;
     const status = state.thermostats.find(t => t.id === this.id)!;
     status.humidity = Math.round(status.humidity);
     if (status.target !== this.status?.target) {
