@@ -16,5 +16,8 @@
   },
   "2.2.0": {
     "en": "Added dew protection warning"
+  },
+  "2.3.0": {
+    "en": "New setting to change the controller's network address (IP, port)"
   }
 }
