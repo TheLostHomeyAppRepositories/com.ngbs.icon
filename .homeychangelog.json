@@ -19,5 +19,8 @@
   },
   "2.3.0": {
     "en": "New setting to change the controller's network address (IP, port)"
+  },
+  "2.3.1": {
+    "en": "Fixed a crash"
   }
 }
